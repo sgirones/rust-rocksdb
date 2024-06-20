@@ -1,6 +1,7 @@
 use crate::ffi;
 
 use super::cloud_bucket_options::CloudBucketOptions;
+use super::kafka_log_options::KafkaLogOptions;
 
 /// Cloud System options.
 ///
@@ -60,6 +61,13 @@ impl CloudFileSystemOptions {
     pub fn set_dst_bucket(&mut self, bucket: CloudBucketOptions) {
         unsafe {
             ffi::rocksdb_cloud_fs_options_set_dest_bucket(self.inner, bucket.inner);
+        }
+    }
+
+    /// Set the kafka log options for the cloud file system.
+    pub fn set_kafka_log(&mut self, kafka_log: KafkaLogOptions) {
+        unsafe {
+            ffi::rocksdb_cloud_fs_options_set_kafka_log(self.inner, kafka_log.inner);
         }
     }
 

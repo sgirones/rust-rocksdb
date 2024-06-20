@@ -92,11 +92,14 @@ fn build_rocksdb() {
 
     if cfg!(feature = "cloud") {
         config.define("USE_AWS", Some("1"));
+        config.define("USE_KAFKA", Some("1"));
 
         println!("cargo:rustc-link-lib=aws-cpp-sdk-s3");
         println!("cargo:rustc-link-lib=aws-cpp-sdk-kinesis");
         println!("cargo:rustc-link-lib=aws-cpp-sdk-core");
         println!("cargo:rustc-link-lib=aws-cpp-sdk-transfer");
+        println!("cargo:rustc-link-lib=rdkafka");
+        println!("cargo:rustc-link-lib=rdkafka++");
     }
 
     config.include(".");
