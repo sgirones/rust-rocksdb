@@ -1,3 +1,4 @@
+use std::pin::Pin;
 use std::sync::Arc;
 
 use libc::{self, c_int};
@@ -15,7 +16,7 @@ use crate::{ffi, Error};
 /// Note: currently, C API behinds C++ API for various settings.
 /// See also: `rocksdb/include/env.h`
 #[derive(Clone)]
-pub struct Env(pub(crate) Arc<EnvWrapper>);
+pub struct Env(pub(crate) Pin<Arc<EnvWrapper>>);
 
 pub(crate) struct EnvWrapper {
     pub(crate) inner: *mut ffi::rocksdb_env_t,
@@ -36,7 +37,7 @@ impl Env {
         if env.is_null() {
             Err(Error::new("Could not create mem env".to_owned()))
         } else {
-            Ok(Self(Arc::new(EnvWrapper { inner: env })))
+            Ok(Self(Arc::pin(EnvWrapper { inner: env })))
         }
     }
 
@@ -47,7 +48,7 @@ impl Env {
         if env.is_null() {
             Err(Error::new("Could not create mem env".to_owned()))
         } else {
-            Ok(Self(Arc::new(EnvWrapper { inner: env })))
+            Ok(Self(Arc::pin(EnvWrapper { inner: env })))
         }
     }
 

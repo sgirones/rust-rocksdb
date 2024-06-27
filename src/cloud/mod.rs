@@ -1,8 +1,8 @@
 mod cloud_bucket_options;
 mod cloud_fs;
 mod cloud_fs_options;
-mod kafka_log_options;
 mod cloud_optimistic_transaction_db;
+mod kafka_log_options;
 
 pub use cloud_bucket_options::CloudBucketOptions;
 pub use cloud_fs::CloudFileSystem;

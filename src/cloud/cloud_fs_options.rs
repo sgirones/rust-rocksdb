@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use crate::ffi;
 
 use super::cloud_bucket_options::CloudBucketOptions;
@@ -16,35 +18,23 @@ use super::kafka_log_options::KafkaLogOptions;
 ///
 /// let cloud_fs = CloudFileSystem::new(opts);
 /// ```
-pub struct CloudFileSystemOptions {
+#[derive(Clone)]
+pub struct CloudFileSystemOptions(pub(crate) Arc<Mutex<CloudFileSystemOptionsWrapper>>);
+
+pub struct CloudFileSystemOptionsWrapper {
     pub(crate) inner: *mut ffi::rocksdb_cloud_fs_options_t,
     pub(crate) persistent_cache_path: Option<String>,
     pub(crate) persistent_cache_size_gb: Option<usize>,
+    pub(crate) log_level: crate::LogLevel,
 }
 
-unsafe impl Send for CloudFileSystemOptions {}
-unsafe impl Sync for CloudFileSystemOptions {}
+unsafe impl Send for CloudFileSystemOptionsWrapper {}
+unsafe impl Sync for CloudFileSystemOptionsWrapper {}
 
-impl Drop for CloudFileSystemOptions {
+impl Drop for CloudFileSystemOptionsWrapper {
     fn drop(&mut self) {
         unsafe {
             ffi::rocksdb_cloud_fs_options_destroy(self.inner);
-        }
-    }
-}
-
-impl Clone for CloudFileSystemOptions {
-    fn clone(&self) -> Self {
-        let inner = unsafe { ffi::rocksdb_cloud_fs_options_create_copy(self.inner) };
-        assert!(
-            !inner.is_null(),
-            "Could not copy RocksDB Cloud FileSystem options"
-        );
-
-        Self {
-            inner,
-            persistent_cache_path: self.persistent_cache_path.clone(),
-            persistent_cache_size_gb: self.persistent_cache_size_gb.clone(),
         }
     }
 }
@@ -53,31 +43,56 @@ impl CloudFileSystemOptions {
     /// Set the source bucket for the cloud file system.
     pub fn set_src_bucket(&mut self, bucket: CloudBucketOptions) {
         unsafe {
-            ffi::rocksdb_cloud_fs_options_set_src_bucket(self.inner, bucket.inner);
+            ffi::rocksdb_cloud_fs_options_set_src_bucket(
+                self.0.lock().unwrap().inner,
+                bucket.inner,
+            );
         }
     }
 
     /// Set the destination bucket for the cloud file system.
     pub fn set_dst_bucket(&mut self, bucket: CloudBucketOptions) {
         unsafe {
-            ffi::rocksdb_cloud_fs_options_set_dest_bucket(self.inner, bucket.inner);
+            ffi::rocksdb_cloud_fs_options_set_dest_bucket(
+                self.0.lock().unwrap().inner,
+                bucket.inner,
+            );
         }
     }
 
     /// Set the kafka log options for the cloud file system.
-    pub fn set_kafka_log(&mut self, kafka_log: KafkaLogOptions) {
+    pub fn set_kafka_log(&mut self, kafka_log: &KafkaLogOptions) {
         unsafe {
-            ffi::rocksdb_cloud_fs_options_set_kafka_log(self.inner, kafka_log.inner);
+            ffi::rocksdb_cloud_fs_options_set_kafka_log(
+                self.0.lock().unwrap().inner,
+                kafka_log.clone().0.inner,
+            );
         }
     }
 
     pub fn set_persistent_cache_path(&mut self, path: &str) {
-        self.persistent_cache_path = Some(path.to_owned());
+        self.0.lock().unwrap().persistent_cache_path = Some(path.to_owned());
     }
 
     // Set the size of the persistent cache in gigabytes.
     pub fn set_persistent_cache_size_gb(&mut self, size: usize) {
-        self.persistent_cache_size_gb = Some(size);
+        self.0.lock().unwrap().persistent_cache_size_gb = Some(size);
+    }
+
+    pub fn set_log_level(&mut self, level: crate::LogLevel) {
+        self.0.lock().unwrap().log_level = level;
+    }
+
+    pub fn persistent_cache_path(&self) -> Option<String> {
+        self.0.lock().unwrap().persistent_cache_path.clone()
+    }
+
+    pub fn persistent_cache_size_gb(&self) -> Option<usize> {
+        self.0.lock().unwrap().persistent_cache_size_gb
+    }
+
+    pub fn log_level(&self) -> crate::LogLevel {
+        self.0.lock().unwrap().log_level
     }
 }
 
@@ -87,11 +102,12 @@ impl Default for CloudFileSystemOptions {
             let opts = ffi::rocksdb_cloud_fs_options_create();
             assert!(!opts.is_null(), "Could not create RocksDB options");
 
-            Self {
+            Self(Arc::new(Mutex::new(CloudFileSystemOptionsWrapper {
                 inner: opts,
                 persistent_cache_path: None,
                 persistent_cache_size_gb: None,
-            }
+                log_level: crate::LogLevel::Info,
+            })))
         }
     }
 }

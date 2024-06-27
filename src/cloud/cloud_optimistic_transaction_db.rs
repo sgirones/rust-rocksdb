@@ -273,14 +273,14 @@ impl<T: ThreadMode> CloudOptimisticTransactionDB<T> {
     ) -> Result<*mut ffi::rocksdb_cloud_otxn_db_t, Error> {
         let persistent_cache_path = cloud_fs
             .opts()
-            .persistent_cache_path
+            .persistent_cache_path()
             .clone()
             .unwrap_or("".to_owned())
             .into_c_string()
             .unwrap();
         let persistent_cache_size_gb = cloud_fs
             .opts()
-            .persistent_cache_size_gb
+            .persistent_cache_size_gb()
             .clone()
             .unwrap_or(0) as u64;
 
@@ -306,14 +306,14 @@ impl<T: ThreadMode> CloudOptimisticTransactionDB<T> {
     ) -> Result<*mut ffi::rocksdb_cloud_otxn_db_t, Error> {
         let persistent_cache_path = cloud_fs
             .opts()
-            .persistent_cache_path
+            .persistent_cache_path()
             .clone()
             .unwrap_or("".to_owned())
             .into_c_string()
             .unwrap();
         let persistent_cache_size_gb = cloud_fs
             .opts()
-            .persistent_cache_size_gb
+            .persistent_cache_size_gb()
             .clone()
             .unwrap_or(0) as u64;
 
