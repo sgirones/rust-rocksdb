@@ -60,6 +60,26 @@ impl CloudFileSystemOptions {
         }
     }
 
+    // Enables or disables `keep_local_sst_files` option.
+    //
+    // If enabled, sst files are stored locally and uploaded to the cloud in
+    // the background. On restart, all files from the cloud that are not present
+    // locally are downloaded.
+    //
+    // If disabled, local sst files are created, uploaded to cloud immediately,
+    // and local file is deleted. All reads are satisfied by fetching
+    // data from the cloud.
+    //
+    // Default:  false
+    pub fn set_keep_local_sst_files(&mut self, keep: bool) {
+        unsafe {
+            ffi::rocksdb_cloud_fs_options_set_keep_local_sst_files(
+                self.0.lock().unwrap().inner,
+                keep,
+            );
+        }
+    }
+
     /// Set the kafka log options for the cloud file system.
     pub fn set_kafka_log(&mut self, kafka_log: &KafkaLogOptions) {
         unsafe {

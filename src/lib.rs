@@ -102,7 +102,7 @@ mod write_batch;
 pub use crate::{
     cloud::{
         CloudBucketOptions, CloudFileSystem, CloudFileSystemOptions, CloudOptimisticTransactionDB,
-        KafkaLogOptions,
+        KafkaDebugContext, KafkaLogOptions,
     },
     column_family::{
         AsColumnFamilyRef, BoundColumnFamily, ColumnFamily, ColumnFamilyDescriptor,
